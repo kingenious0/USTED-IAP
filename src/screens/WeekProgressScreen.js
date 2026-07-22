@@ -231,7 +231,50 @@ export default function WeekProgressScreen({
         {/* ── Form Body ── */}
         <View style={styles.formContainer}>
 
-          {/* Key Tasks & Activities (Learning Outcome) combined as main field */}
+          {/* 1. Day Selector */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.inputLabel}>Day of Week</Text>
+            <View style={styles.inputBox}>
+              <CustomDropdown
+                value={selectedDay}
+                options={DAYS}
+                onSelect={handleDaySelect}
+                placeholder="Select Day"
+              />
+            </View>
+          </View>
+
+          {/* 2. Start Time & End Time */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.inputLabel}>Working Hours (Start &amp; End Time)</Text>
+            <View style={styles.timeRow}>
+              <View style={styles.timeCol}>
+                <Text style={styles.subLabel}>Start Time</Text>
+                <View style={styles.inputBox}>
+                  <CustomDropdown
+                    value={startTime}
+                    options={TIME_OPTIONS}
+                    onSelect={setStartTime}
+                    placeholder="Start Time"
+                  />
+                </View>
+              </View>
+
+              <View style={styles.timeCol}>
+                <Text style={styles.subLabel}>End Time</Text>
+                <View style={styles.inputBox}>
+                  <CustomDropdown
+                    value={endTime}
+                    options={TIME_OPTIONS}
+                    onSelect={setEndTime}
+                    placeholder="End Time"
+                  />
+                </View>
+              </View>
+            </View>
+          </View>
+
+          {/* 3. Key Tasks & Activities (Learning Outcome) */}
           <View style={styles.inputGroup}>
             <Text style={styles.inputLabel}>Describe key tasks/activities performed for the day (Learning Outcome)</Text>
             <View style={styles.inputBox}>
@@ -248,46 +291,7 @@ export default function WeekProgressScreen({
             </View>
           </View>
 
-          {/* Day Selector */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>Day of Week</Text>
-            <View style={styles.inputBox}>
-              <CustomDropdown
-                value={selectedDay}
-                options={DAYS}
-                onSelect={handleDaySelect}
-                placeholder="Select Day"
-              />
-            </View>
-          </View>
-
-          {/* Start Time */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>Start Time</Text>
-            <View style={styles.inputBox}>
-              <CustomDropdown
-                value={startTime}
-                options={TIME_OPTIONS}
-                onSelect={setStartTime}
-                placeholder="Start Time"
-              />
-            </View>
-          </View>
-
-          {/* End Time */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>End Time</Text>
-            <View style={styles.inputBox}>
-              <CustomDropdown
-                value={endTime}
-                options={TIME_OPTIONS}
-                onSelect={setEndTime}
-                placeholder="End Time"
-              />
-            </View>
-          </View>
-
-          {/* Skills Demonstrated */}
+          {/* 4. Skills Demonstrated */}
           <View style={styles.inputGroup}>
             <Text style={styles.inputLabel}>Skills Demonstrated</Text>
             <View style={styles.inputBox}>
@@ -301,7 +305,7 @@ export default function WeekProgressScreen({
             </View>
           </View>
 
-          {/* Remarks */}
+          {/* 5. Remarks */}
           <View style={styles.inputGroup}>
             <Text style={styles.inputLabel}>Remarks / Issues Faced (Optional)</Text>
             <View style={styles.inputBox}>
@@ -442,6 +446,19 @@ const styles = StyleSheet.create({
     color: USTED_THEME.textPrimary,
     marginBottom: 8,
     letterSpacing: 0.1,
+  },
+  timeRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  timeCol: {
+    flex: 1,
+  },
+  subLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: USTED_THEME.textSecondary,
+    marginBottom: 6,
   },
 
   // Input container box
