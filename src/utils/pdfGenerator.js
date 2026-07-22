@@ -122,13 +122,45 @@ const generateHtml = (profile, allLogs) => {
   `;
 };
 
+const printHtmlOnWeb = (html) => {
+  if (typeof document === 'undefined') return;
+
+  const iframe = document.createElement('iframe');
+  iframe.style.position = 'fixed';
+  iframe.style.right = '0';
+  iframe.style.bottom = '0';
+  iframe.style.width = '0';
+  iframe.style.height = '0';
+  iframe.style.border = '0';
+  document.body.appendChild(iframe);
+
+  const doc = iframe.contentDocument || iframe.contentWindow.document;
+  doc.open();
+  doc.write(html);
+  doc.close();
+
+  setTimeout(() => {
+    try {
+      iframe.contentWindow.focus();
+      iframe.contentWindow.print();
+    } catch (e) {
+      console.error('[printHtmlOnWeb] Error:', e);
+    } finally {
+      setTimeout(() => {
+        try {
+          document.body.removeChild(iframe);
+        } catch (_e) {}
+      }, 2000);
+    }
+  }, 300);
+};
+
 export const generatePdf = async (profile, allLogs) => {
   try {
     const html = generateHtml(profile, allLogs);
 
-    // On web, printAsync opens the browser print dialog
     if (Platform.OS === 'web') {
-      await Print.printAsync({ html });
+      printHtmlOnWeb(html);
       return { success: true };
     }
 
@@ -460,7 +492,7 @@ export const generateWeekPdf = async (weekNumber, weekData, profile) => {
     const html = generateWeekHtml(weekNumber, weekData, profile);
 
     if (Platform.OS === 'web') {
-      await Print.printAsync({ html });
+      printHtmlOnWeb(html);
       return { success: true, uri: null };
     }
 
