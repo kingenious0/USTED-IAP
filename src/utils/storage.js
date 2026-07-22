@@ -126,13 +126,9 @@ export const syncToCloud = async (payload) => {
   }
 
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    const finalPayload = {
-      ...payload,
-      user_id: payload.user_id || (user ? user.id : null),
-    };
-    // Upsert payload to supabase.
-    const { error } = await supabase.from('daily_logs').upsert([finalPayload]);
+    // Remove user_id from payload if present, as daily_logs schema uses index_number
+    const { user_id, ...cleanPayload } = payload;
+    const { error } = await supabase.from('daily_logs').upsert([cleanPayload]);
     if (error) throw error;
     return { success: true, message: 'Synced to cloud.' };
   } catch (e) {
