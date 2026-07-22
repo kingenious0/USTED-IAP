@@ -131,23 +131,30 @@ export default function SetupScreen({ onComplete, onCancel }) {
     }
 
     setLoading(true);
-    const profile = {
-      name: name.trim(),
-      indexNumber: indexNumber.trim(),
-      program: program.trim(),
-      level,
-      industryName: industryName.trim(),
-      industryLocation: industryLocation.trim(),
-      supervisorName: supervisorName.trim(),
-      welMonth,
-      welYear,
-      welCommencement: (welMonth && welYear) ? `${welMonth} ${welYear}` : '',
-      weeks: parseInt(weeks, 10),
-      createdAt: new Date().toISOString(),
-    };
-    await saveStudentProfile(profile);
-    setLoading(false);
-    onComplete(profile);
+    try {
+      const profile = {
+        name: name.trim(),
+        indexNumber: indexNumber.trim(),
+        program: program.trim(),
+        level,
+        industryName: industryName.trim(),
+        industryLocation: industryLocation.trim(),
+        supervisorName: supervisorName.trim(),
+        welMonth,
+        welYear,
+        welCommencement: (welMonth && welYear) ? `${welMonth} ${welYear}` : '',
+        weeks: parseInt(weeks, 10),
+        createdAt: new Date().toISOString(),
+      };
+
+      await saveStudentProfile(profile);
+      onComplete(profile);
+    } catch (err) {
+      console.error('[SetupScreen] Error submitting profile:', err);
+      Alert.alert('Error', 'An unexpected error occurred while saving your profile.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

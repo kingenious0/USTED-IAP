@@ -31,32 +31,37 @@ export const saveStudentProfile = async (profile) => {
       userId: user ? user.id : null,
     };
 
-    // 1. Save locally
+    // 1. Save locally immediately so UI never hangs
     await AsyncStorage.setItem(KEYS.STUDENT_PROFILE, JSON.stringify(profileWithUser));
 
-    // 2. Sync to Supabase
+    // 2. Sync to Supabase in background (with timeout safety)
     if (!isMockClient && profile && profile.indexNumber) {
-      try {
-        const payload = {
-          user_id: user ? user.id : null,
-          index_number: profile.indexNumber,
-          name: profile.name,
-          program: profile.program,
-          level: profile.level,
-          industry_name: profile.industryName,
-          industry_location: profile.industryLocation,
-          supervisor_name: profile.supervisorName,
-          wel_month: profile.welMonth,
-          wel_year: profile.welYear,
-          wel_commencement: profile.welCommencement || '',
-          weeks: profile.weeks,
-          updated_at: new Date().toISOString(),
-        };
-        const { error } = await supabase.from('student_profiles').upsert([payload]);
-        if (error) throw error;
-      } catch (cloudErr) {
-        console.error('[saveStudentProfile] Supabase sync failed:', cloudErr);
-      }
+      const payload = {
+        user_id: user ? user.id : null,
+        index_number: profile.indexNumber,
+        name: profile.name,
+        program: profile.program,
+        level: profile.level,
+        industry_name: profile.industryName,
+        industry_location: profile.industryLocation,
+        supervisor_name: profile.supervisorName,
+        wel_month: profile.welMonth,
+        wel_year: profile.welYear,
+        wel_commencement: profile.welCommencement || '',
+        weeks: profile.weeks,
+        updated_at: new Date().toISOString(),
+      };
+
+      Promise.race([
+        supabase.from('student_profiles').upsert([payload]),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Cloud sync timeout')), 4000)),
+      ])
+        .then(({ error } = {}) => {
+          if (error) console.error('[saveStudentProfile] Supabase sync error:', error);
+        })
+        .catch((cloudErr) => {
+          console.warn('[saveStudentProfile] Background cloud sync notice:', cloudErr?.message || cloudErr);
+        });
     }
 
     return { success: true };
