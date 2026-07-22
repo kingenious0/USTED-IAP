@@ -32,21 +32,27 @@ export default function AuthScreen({ onAuthSuccess }) {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [focusedField, setFocusedField] = useState(null);
+  const [errorMsg, setErrorMsg] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
 
   const handleEmailAuth = async () => {
+    setErrorMsg('');
+    setSuccessMsg('');
+
     if (!indexNumber.trim() || !password.trim()) {
-      Alert.alert('Error', 'Please fill in all fields.');
+      const msg = 'Please enter both your Index Number and Password.';
+      setErrorMsg(msg);
       return;
     }
 
-    // Convert index number into an email format automatically
     const email = `${indexNumber.trim().replace(/\s+/g, '')}@student.usted.edu.gh`;
 
     setLoading(true);
     try {
       if (isSignUp) {
         if (!fullName.trim()) {
-          Alert.alert('Error', 'Please enter your full name.');
+          const msg = 'Please enter your full name.';
+          setErrorMsg(msg);
           setLoading(false);
           return;
         }
@@ -62,12 +68,10 @@ export default function AuthScreen({ onAuthSuccess }) {
           },
         });
         if (error) throw error;
-        
-        Alert.alert(
-          'Account Created', 
-          'Your account has been successfully created! You can now log in using your Index Number and Password.'
-        );
-        setIsSignUp(false); // Switch to Log In mode
+
+        const successText = 'Account created successfully! You can now log in using your Index Number and Password.';
+        setSuccessMsg(successText);
+        setIsSignUp(false);
       } else {
         const { data, error } = await supabase.auth.signInWithPassword({
           email: email,
@@ -77,18 +81,29 @@ export default function AuthScreen({ onAuthSuccess }) {
         if (onAuthSuccess) onAuthSuccess(data.session);
       }
     } catch (error) {
-      Alert.alert('Authentication Error', error.message || 'Something went wrong.');
+      let friendlyMessage = error.message || 'Something went wrong during authentication.';
+      const lower = friendlyMessage.toLowerCase();
+      if (lower.includes('invalid login credentials')) {
+        friendlyMessage = 'Incorrect Index Number or Password. If you do not have an account yet, please tap "Sign Up" below.';
+      } else if (lower.includes('user already registered') || lower.includes('already exists')) {
+        friendlyMessage = 'An account with this Index Number already exists. Please switch to Log In.';
+      } else if (lower.includes('at least 6 characters')) {
+        friendlyMessage = 'Password must be at least 6 characters long.';
+      }
+
+      setErrorMsg(friendlyMessage);
     } finally {
       setLoading(false);
     }
   };
 
   const handleGoogleSignIn = async () => {
+    setErrorMsg('');
+    setSuccessMsg('');
+
     if (!GoogleSignin) {
-      Alert.alert(
-        'Feature Unavailable',
-        'Native Google Sign-In requires a custom Development Build (Prebuild) and is not supported directly in the Expo Go client. Please use your Index Number and Password instead.'
-      );
+      const msg = 'Native Google Sign-In is not supported in Expo Go. Please use your Index Number and Password.';
+      setErrorMsg(msg);
       return;
     }
 
@@ -109,7 +124,7 @@ export default function AuthScreen({ onAuthSuccess }) {
       if (onAuthSuccess) onAuthSuccess(data.session);
     } catch (error) {
       console.error('Google Sign-in Error:', error);
-      Alert.alert('Google Auth Error', error.message || 'Could not complete Google Sign-in.');
+      setErrorMsg(error.message || 'Could not complete Google Sign-in.');
     } finally {
       setLoading(false);
     }
@@ -131,12 +146,27 @@ export default function AuthScreen({ onAuthSuccess }) {
             <Text style={styles.cardTitle}>{isSignUp ? 'Create Account' : 'Welcome Back'}</Text>
             <Text style={styles.cardSub}>Sign in to sync your attachment logs</Text>
 
+            {/* Inline Feedback Banners */}
+            {errorMsg ? (
+              <View style={styles.errorBanner}>
+                <Text style={styles.bannerIcon}>⚠️</Text>
+                <Text style={styles.errorBannerText}>{errorMsg}</Text>
+              </View>
+            ) : null}
+
+            {successMsg ? (
+              <View style={styles.successBanner}>
+                <Text style={styles.bannerIcon}>✅</Text>
+                <Text style={styles.successBannerText}>{successMsg}</Text>
+              </View>
+            ) : null}
+
             {isSignUp && (
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>FULL NAME</Text>
                 <TextInput
                   value={fullName}
-                  onChangeText={setFullName}
+                  onChangeText={(val) => { setErrorMsg(''); setFullName(val); }}
                   placeholder="e.g. Samuel Kojo"
                   placeholderTextColor={USTED_THEME.textSecondary}
                   onFocus={() => setFocusedField('fullName')}
@@ -150,7 +180,7 @@ export default function AuthScreen({ onAuthSuccess }) {
               <Text style={styles.label}>INDEX NUMBER</Text>
               <TextInput
                 value={indexNumber}
-                onChangeText={setIndexNumber}
+                onChangeText={(val) => { setErrorMsg(''); setIndexNumber(val); }}
                 placeholder="e.g. 040921000"
                 placeholderTextColor={USTED_THEME.textSecondary}
                 autoCapitalize="none"
@@ -166,7 +196,7 @@ export default function AuthScreen({ onAuthSuccess }) {
               <View style={styles.passwordContainer}>
                 <TextInput
                   value={password}
-                  onChangeText={setPassword}
+                  onChangeText={(val) => { setErrorMsg(''); setPassword(val); }}
                   placeholder="••••••••"
                   placeholderTextColor={USTED_THEME.textSecondary}
                   secureTextEntry={!showPassword}
@@ -220,7 +250,11 @@ export default function AuthScreen({ onAuthSuccess }) {
 
           <TouchableOpacity
             style={styles.toggleBtn}
-            onPress={() => setIsSignUp(!isSignUp)}
+            onPress={() => {
+              setErrorMsg('');
+              setSuccessMsg('');
+              setIsSignUp(!isSignUp);
+            }}
           >
             <Text style={styles.toggleText}>
               {isSignUp
@@ -293,7 +327,46 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: USTED_THEME.textSecondary,
     marginTop: 4,
-    marginBottom: 24,
+    marginBottom: 20,
+  },
+  errorBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FEF2F2',
+    borderWidth: 1,
+    borderColor: '#FCA5A5',
+    borderRadius: USTED_THEME.borderRadius.md,
+    padding: 12,
+    marginBottom: 16,
+    gap: 8,
+  },
+  errorBannerText: {
+    flex: 1,
+    fontSize: 12,
+    color: '#991B1B',
+    fontWeight: '600',
+    lineHeight: 16,
+  },
+  successBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F0FDF4',
+    borderWidth: 1,
+    borderColor: '#86EFAC',
+    borderRadius: USTED_THEME.borderRadius.md,
+    padding: 12,
+    marginBottom: 16,
+    gap: 8,
+  },
+  successBannerText: {
+    flex: 1,
+    fontSize: 12,
+    color: '#166534',
+    fontWeight: '600',
+    lineHeight: 16,
+  },
+  bannerIcon: {
+    fontSize: 14,
   },
   inputGroup: {
     marginBottom: 16,
