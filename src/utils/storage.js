@@ -109,7 +109,8 @@ export const loadWeeklyLogs = async () => {
 const addToSyncQueue = async (payload) => {
   const raw = await AsyncStorage.getItem(KEYS.SYNC_QUEUE);
   const queue = raw ? JSON.parse(raw) : [];
-  queue.push({ ...payload, queuedAt: new Date().toISOString() });
+  const { user_id, queuedAt, ...cleanPayload } = payload;
+  queue.push({ ...cleanPayload, queuedAt: new Date().toISOString() });
   await AsyncStorage.setItem(KEYS.SYNC_QUEUE, JSON.stringify(queue));
 };
 
@@ -126,8 +127,8 @@ export const syncToCloud = async (payload) => {
   }
 
   try {
-    // Remove user_id from payload if present, as daily_logs schema uses index_number
-    const { user_id, ...cleanPayload } = payload;
+    // Remove user_id and queuedAt from payload as daily_logs schema uses index_number
+    const { user_id, queuedAt, ...cleanPayload } = payload;
     const { error } = await supabase.from('daily_logs').upsert([cleanPayload]);
     if (error) throw error;
     return { success: true, message: 'Synced to cloud.' };
@@ -149,8 +150,15 @@ export const flushSyncQueue = async () => {
   const remaining = [];
   for (const item of queue) {
     try {
-      const { error } = await supabase.from('daily_logs').upsert([item]);
-      if (error) remaining.push(item);
+      const { user_id, queuedAt, ...cleanItem } = item;
+      const { error } = await supabase.from('daily_logs').upsert([cleanItem]);
+      if (error) {
+        console.error('[flushSyncQueue] Upsert error:', error);
+        // Do not keep invalid items in queue if schema rejected
+        if (error.code !== 'PGRST204' && error.code !== '23502' && error.status !== 400) {
+          remaining.push(item);
+        }
+      }
     } catch (_e) {
       remaining.push(item);
     }
