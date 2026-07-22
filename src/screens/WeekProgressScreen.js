@@ -76,6 +76,13 @@ export default function WeekProgressScreen({
 }) {
   const [selectedDay, setSelectedDay] = useState(initialDay || 'Mon');
 
+  // Sync initialDay whenever prop changes
+  useEffect(() => {
+    if (initialDay) {
+      setSelectedDay(initialDay);
+    }
+  }, [initialDay]);
+
   // Form fields
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');

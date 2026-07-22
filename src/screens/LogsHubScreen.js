@@ -523,6 +523,17 @@ export default function LogsHubScreen({ profile, onLogToday, onBack, onUpdatePro
     return totalWeeks;
   }, [totalWeeks]);
 
+  // Determine the next unfilled day in the active week
+  const getNextUnfilledDay = useCallback((logs, weekNum) => {
+    const wk = logs[`week_${weekNum}`] || {};
+    for (const d of DAYS_FULL) {
+      if (!getEntryText(wk[d])) {
+        return d;
+      }
+    }
+    return 'Mon';
+  }, []);
+
   const loadData = useCallback(async () => {
     const [logs, locked] = await Promise.all([
       loadWeeklyLogs(),
@@ -556,6 +567,7 @@ export default function LogsHubScreen({ profile, onLogToday, onBack, onUpdatePro
   };
 
   const activeWeek = getActiveWeek(allLogs, lockedWeeks);
+  const nextDay = getNextUnfilledDay(allLogs, activeWeek);
   const renderedWeeks = weeksToShow();
 
   // Total stats
@@ -593,7 +605,7 @@ export default function LogsHubScreen({ profile, onLogToday, onBack, onUpdatePro
         {/* ── Hero Action Card ── */}
         <TouchableOpacity
           style={styles.heroCard}
-          onPress={() => onLogToday(activeWeek)}
+          onPress={() => onLogToday(activeWeek, nextDay)}
           activeOpacity={0.85}
         >
           <View style={styles.heroCardLeft}>
@@ -602,7 +614,7 @@ export default function LogsHubScreen({ profile, onLogToday, onBack, onUpdatePro
           <View style={styles.heroCardBody}>
             <Text style={styles.heroCardTitle}>Log Today's Activity</Text>
             <Text style={styles.heroCardSub}>
-              Week {activeWeek} · Tap to open the log editor
+              Week {activeWeek} · {nextDay} · Tap to open log editor
             </Text>
           </View>
           <Text style={styles.heroCardArrow}>›</Text>
