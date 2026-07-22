@@ -24,26 +24,41 @@ export default function App() {
   const handleSessionState = async (currentSession) => {
     setLoading(true);
     if (!currentSession) {
+      await clearAllData();
       setProfile(null);
       setScreen('auth');
       setLoading(false);
       return;
     }
 
-    // Recover profile & logs from local storage first
+    const userId = currentSession.user?.id;
+    const userIndex = currentSession.user?.user_metadata?.index_number;
+
+    // Check local storage profile
     const localProfile = await loadStudentProfile();
-    if (localProfile) {
+
+    // Verify local profile matches current authenticated user
+    const isMatchingUser = localProfile && (
+      (localProfile.userId && localProfile.userId === userId) ||
+      (userIndex && localProfile.indexNumber === userIndex)
+    );
+
+    if (localProfile && isMatchingUser) {
       setProfile(localProfile);
       setScreen('hub');
       await flushSyncQueue();
     } else {
-      // Fetch and restore profile & logs from Supabase
+      // Local profile is missing or belongs to another user — clear stale device cache
+      await clearAllData();
+
+      // Fetch and restore profile & logs from Supabase for this user
       const restored = await restoreDataFromCloud();
       if (restored) {
         setProfile(restored);
         setScreen('hub');
       } else {
-        // No profile found online or offline, go to onboarding setup
+        // No profile found for this user online or offline, go to setup screen
+        setProfile(null);
         setScreen('setup');
       }
     }

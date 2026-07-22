@@ -25,13 +25,18 @@ const KEYS = {
 
 export const saveStudentProfile = async (profile) => {
   try {
+    const { data: { user } } = await supabase.auth.getUser();
+    const profileWithUser = {
+      ...profile,
+      userId: user ? user.id : null,
+    };
+
     // 1. Save locally
-    await AsyncStorage.setItem(KEYS.STUDENT_PROFILE, JSON.stringify(profile));
+    await AsyncStorage.setItem(KEYS.STUDENT_PROFILE, JSON.stringify(profileWithUser));
 
     // 2. Sync to Supabase
     if (!isMockClient && profile && profile.indexNumber) {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
         const payload = {
           user_id: user ? user.id : null,
           index_number: profile.indexNumber,
@@ -193,7 +198,7 @@ export const restoreDataFromCloud = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return null;
 
-    // 1. Fetch profile matching user_id
+    // 1. Fetch profile strictly matching user_id
     const { data: profiles, error: profileErr } = await supabase
       .from('student_profiles')
       .select('*')
@@ -201,22 +206,13 @@ export const restoreDataFromCloud = async () => {
 
     if (profileErr) throw profileErr;
 
-    let profile = profiles && profiles[0];
-    
-    // Fallback: If no profile by user_id, check by index_number matching username part of email
-    if (!profile && user.email) {
-      const emailPrefix = user.email.split('@')[0];
-      const { data: fallbackProfiles } = await supabase
-        .from('student_profiles')
-        .select('*')
-        .eq('index_number', emailPrefix);
-      profile = fallbackProfiles && fallbackProfiles[0];
-    }
+    const profile = profiles && profiles[0];
 
     if (!profile) return null;
 
     // Map back to local profile
     const localProfile = {
+      userId: user.id,
       name: profile.name,
       indexNumber: profile.index_number,
       program: profile.program,
