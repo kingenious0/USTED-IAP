@@ -121,8 +121,13 @@ export const syncToCloud = async (payload) => {
   }
 
   try {
-    // Upsert payload to supabase. Ensure payload contains the new fields
-    const { error } = await supabase.from('daily_logs').upsert([payload]);
+    const { data: { user } } = await supabase.auth.getUser();
+    const finalPayload = {
+      ...payload,
+      user_id: payload.user_id || (user ? user.id : null),
+    };
+    // Upsert payload to supabase.
+    const { error } = await supabase.from('daily_logs').upsert([finalPayload]);
     if (error) throw error;
     return { success: true, message: 'Synced to cloud.' };
   } catch (e) {
