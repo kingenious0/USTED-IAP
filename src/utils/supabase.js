@@ -2,6 +2,13 @@ import { createClient } from '@supabase/supabase-js';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as FileSystem from 'expo-file-system/legacy';
 
+if (!process.env.EXPO_PUBLIC_SUPABASE_URL) {
+  console.warn(
+    '⚠️ [Supabase Warning]: EXPO_PUBLIC_SUPABASE_URL is missing! ' +
+    'If you recently added your .env file, stop Metro and run "npx expo start -c" to clear the cache.'
+  );
+}
+
 const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
 const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-anon-key';
 
