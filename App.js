@@ -21,11 +21,13 @@ export default function App() {
   const [loading, setLoading]         = useState(true);
   const [hubRefreshKey, setHubRefreshKey] = useState(0); // increments to force hub data reload
 
-  const handleSessionState = async (currentSession) => {
-    setLoading(true);
+  const handleSessionState = async (currentSession, shouldNavigate = true) => {
+    if (shouldNavigate) setLoading(true);
+
     if (!currentSession) {
       await clearAllData();
       setProfile(null);
+      setSession(null);
       setScreen('auth');
       setLoading(false);
       return;
@@ -45,7 +47,9 @@ export default function App() {
 
     if (localProfile && isMatchingUser) {
       setProfile(localProfile);
-      setScreen('hub');
+      if (shouldNavigate) {
+        setScreen('hub');
+      }
       await flushSyncQueue();
     } else {
       // Local profile is missing or belongs to another user — clear stale device cache
@@ -55,11 +59,15 @@ export default function App() {
       const restored = await restoreDataFromCloud();
       if (restored) {
         setProfile(restored);
-        setScreen('hub');
+        if (shouldNavigate) {
+          setScreen('hub');
+        }
       } else {
         // No profile found for this user online or offline, go to setup screen
         setProfile(null);
-        setScreen('setup');
+        if (shouldNavigate) {
+          setScreen('setup');
+        }
       }
     }
     setLoading(false);
@@ -67,16 +75,30 @@ export default function App() {
 
   // Restore saved profile & listen for auth on mount
   useEffect(() => {
-    // 1. Check current session
+    // 1. Check current session on initial mount
     supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
       setSession(currentSession);
-      handleSessionState(currentSession);
+      handleSessionState(currentSession, true);
     });
 
-    // 2. Listen to Auth state changes
+    // 2. Listen to Auth state changes (login, logout, tab switch token refresh)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
       setSession(currentSession);
-      await handleSessionState(currentSession);
+
+      if (event === 'SIGNED_OUT' || !currentSession) {
+        await clearAllData();
+        setProfile(null);
+        setSession(null);
+        setScreen('auth');
+      } else if (event === 'SIGNED_IN') {
+        setScreen((prevScreen) => {
+          if (prevScreen === 'auth') {
+            handleSessionState(currentSession, true);
+          }
+          return prevScreen;
+        });
+      }
+      // Ignore TOKEN_REFRESHED / USER_UPDATED events triggered by tab focus so active screen & text inputs remain intact.
     });
 
     return () => {

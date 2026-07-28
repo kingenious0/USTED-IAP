@@ -233,6 +233,7 @@ export default function AuthScreen({ onAuthSuccess }) {
               )}
             </TouchableOpacity>
 
+            {/* ── Continue with Google (Commented out for later reuse) ──
             <View style={styles.dividerContainer}>
               <View style={styles.dividerLine} />
               <Text style={styles.dividerText}>OR</Text>
@@ -246,6 +247,7 @@ export default function AuthScreen({ onAuthSuccess }) {
             >
               <Text style={styles.googleBtnText}>Continue with Google</Text>
             </TouchableOpacity>
+            ── End Google Auth ── */}
           </View>
 
           <TouchableOpacity

@@ -479,14 +479,25 @@ function ProfileModal({ visible, profile, onClose, onSave, onLogout }) {
           <TouchableOpacity 
             style={mStyles.logoutBtn} 
             onPress={() => {
-              Alert.alert(
-                'Confirm Log Out',
-                'Are you sure you want to log out? Local cache will be cleared. Your synced logs remain safe in the cloud.',
-                [
-                  { text: 'Cancel', style: 'cancel' },
-                  { text: 'Log Out', style: 'destructive', onPress: onLogout },
-                ]
-              );
+              const handleLogoutConfirm = () => {
+                onClose();
+                if (onLogout) onLogout();
+              };
+
+              if (Platform.OS === 'web') {
+                if (window.confirm('Are you sure you want to log out? Local cache will be cleared. Your synced logs remain safe in the cloud.')) {
+                  handleLogoutConfirm();
+                }
+              } else {
+                Alert.alert(
+                  'Confirm Log Out',
+                  'Are you sure you want to log out? Local cache will be cleared. Your synced logs remain safe in the cloud.',
+                  [
+                    { text: 'Cancel', style: 'cancel' },
+                    { text: 'Log Out', style: 'destructive', onPress: handleLogoutConfirm },
+                  ]
+                );
+              }
             }}
           >
             <Text style={mStyles.logoutBtnText}>Log Out of Account</Text>

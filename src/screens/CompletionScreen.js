@@ -272,33 +272,41 @@ export default function CompletionScreen({ profile, onBack }) {
   const refId = generateRefId(profile);
 
   const handleDownloadPDF = async () => {
-    Alert.alert(
-      'Freeze & Generate PDF',
-      'This action will freeze all logs and generate the final PDF report. Edits cannot be undone. Are you sure you want to proceed?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Freeze & Generate',
-          onPress: async () => {
-            setGeneratingPdf(true);
-            try {
-              const result = await generatePdf(profile, allLogs);
-              if (!result.success) {
-                Alert.alert(
-                  'Export Failed',
-                  result.error || 'Could not generate PDF. Please try again.',
-                  [{ text: 'OK' }]
-                );
-              }
-            } catch (e) {
-              Alert.alert('Export Failed', e.message || 'An unexpected error occurred.', [{ text: 'OK' }]);
-            } finally {
-              setGeneratingPdf(false);
-            }
-          }
+    const doGenerate = async () => {
+      setGeneratingPdf(true);
+      try {
+        const result = await generatePdf(profile, allLogs);
+        if (!result.success) {
+          Alert.alert(
+            'Export Failed',
+            result.error || 'Could not generate PDF. Please try again.',
+            [{ text: 'OK' }]
+          );
         }
-      ]
-    );
+      } catch (e) {
+        Alert.alert('Export Failed', e.message || 'An unexpected error occurred.', [{ text: 'OK' }]);
+      } finally {
+        setGeneratingPdf(false);
+      }
+    };
+
+    if (Platform.OS === 'web') {
+      if (window.confirm('This action will freeze all logs and generate the final PDF report. Edits cannot be undone. Are you sure you want to proceed?')) {
+        await doGenerate();
+      }
+    } else {
+      Alert.alert(
+        'Freeze & Generate PDF',
+        'This action will freeze all logs and generate the final PDF report. Edits cannot be undone. Are you sure you want to proceed?',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Freeze & Generate',
+            onPress: doGenerate
+          }
+        ]
+      );
+    }
   };
 
   return (
