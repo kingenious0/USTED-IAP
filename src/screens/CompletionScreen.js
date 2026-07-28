@@ -291,17 +291,17 @@ export default function CompletionScreen({ profile, onBack }) {
     };
 
     if (Platform.OS === 'web') {
-      if (window.confirm('This action will freeze all logs and generate the final PDF report. Edits cannot be undone. Are you sure you want to proceed?')) {
+      if (window.confirm('This action will finalize all logs and generate the final PDF report. Edits cannot be undone. Are you sure you want to proceed?')) {
         await doGenerate();
       }
     } else {
       Alert.alert(
-        'Freeze & Generate PDF',
-        'This action will freeze all logs and generate the final PDF report. Edits cannot be undone. Are you sure you want to proceed?',
+        'Finalize & Generate PDF',
+        'This action will finalize all logs and generate the final PDF report. Edits cannot be undone. Are you sure you want to proceed?',
         [
           { text: 'Cancel', style: 'cancel' },
           {
-            text: 'Freeze & Generate',
+            text: 'Finalize & Generate',
             onPress: doGenerate
           }
         ]
@@ -432,7 +432,7 @@ export default function CompletionScreen({ profile, onBack }) {
         >
           <Text style={styles.ctaBtnIcon}>📥</Text>
           <Text style={styles.ctaBtnText}>
-            {generatingPdf ? 'GENERATING DOCUMENT...' : 'FREEZE WEEK & GENERATE PDF'}
+            {generatingPdf ? 'GENERATING DOCUMENT...' : 'FINALIZE WEEK & GENERATE PDF'}
           </Text>
         </TouchableOpacity>
         <Text style={styles.ctaCaption}>

@@ -50,14 +50,14 @@ function LockConfirmModal({ visible, weekNumber, onConfirm, onCancel }) {
       <View style={mStyles.overlay}>
         <View style={mStyles.sheet}>
           <View style={mStyles.handle} />
-          <Text style={mStyles.icon}>🔒</Text>
-          <Text style={mStyles.title}>Lock Week {weekNumber}?</Text>
+          <Text style={mStyles.icon}></Text>
+          <Text style={mStyles.title}>Are you sure you want to lock Week {weekNumber}?</Text>
           <Text style={mStyles.body}>
             Once locked, this week's entries cannot be edited. Make sure all 5
             days are complete and accurate before proceeding.
           </Text>
           <TouchableOpacity style={mStyles.confirmBtn} onPress={onConfirm}>
-            <Text style={mStyles.confirmBtnText}>LOCK & FREEZE WEEK {weekNumber}</Text>
+            <Text style={mStyles.confirmBtnText}>LOCK & FINALIZE WEEK {weekNumber}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={mStyles.cancelBtn} onPress={onCancel}>
             <Text style={mStyles.cancelBtnText}>Go Back</Text>
@@ -231,7 +231,7 @@ function WeekBlock({ weekNumber, logs, isLocked, onEditDay, onLockWeek, profile 
           {savingPdf ? (
             <ActivityIndicator size="small" color="#FFFFFF" />
           ) : (
-            <Text style={wbStyles.pdfBtnIcon}>📥</Text>
+            <Text style={wbStyles.pdfBtnIcon}></Text>
           )}
           <Text style={wbStyles.pdfBtnText}>
             {savingPdf ? 'GENERATING...' : `Save Week ${weekNumber} as PDF`}
@@ -242,7 +242,7 @@ function WeekBlock({ weekNumber, logs, isLocked, onEditDay, onLockWeek, profile 
       {/* Lock Banner — only show when week is complete and NOT locked */}
       {isComplete && !isLocked && (
         <TouchableOpacity style={wbStyles.lockBanner} onPress={onLockWeek}>
-          <Text style={wbStyles.lockBannerText}>🔒 LOCK & FREEZE WEEK {weekNumber}</Text>
+          <Text style={wbStyles.lockBannerText}>LOCK & FINALIZE WEEK {weekNumber}</Text>
         </TouchableOpacity>
       )}
     </View>
